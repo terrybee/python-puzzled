@@ -16,7 +16,7 @@ deck = ['A_C', 'A_D', 'A_H', 'A_S', '2_C', '2_D', '2_H', '2_S', '3_C', '3_D', '3
 
 magician_cards = []
 hidden_card = []
-         
+
 #Given 5 cards, Assistant hides an appropriate card
 #He/she reads out the remaining four cards after choosing their order carefully!
 def AssistantOrdersCards():
@@ -26,29 +26,53 @@ def AssistantOrdersCards():
 
     #Initialization
     cards, cind, cardsuits, cnumbers = [], [], [], []
-    numsuits, pairsuit = [0, 0, 0, 0], []
 
     #Various data structures are filled in
     cards = random.sample(deck, 5)
+    # cards = ['2_H', '6_S', '7_H', '10_H', '10_C']
+
     for card in cards:
         n = deck.index(card)
         cind.append(n)
         cardsuits.append(n % 4)
         cnumbers.append(n // 4)
-        numsuits[n % 4] += 1
-        if numsuits[n % 4] > 1:
-            pairsuit.append(n % 4)
-    #print(cards, cind, cardsuits, cnumbers)
+
+    # print(cards, cind, cardsuits, cnumbers)
+
+    # Create cnumber list by same suit list of list
+    cnumbers_by_suits = [[] for i in range(4)]
+    for i in range(5):
+        index = cardsuits[i]
+        value = cnumbers[i]
+        cnumbers_by_suits[index].append(value)
+
+    # Check distance each elements in samesuits
+    pairsuit = None
+    min_distance = 13
+    pairnumber = None
+    for i in range(4):
+        cnumbers_in_same_suits = cnumbers_by_suits[i]
+        if(len(cnumbers_in_same_suits) < 2):
+            continue
+        cnumbers_in_same_suits.sort()
+        cnumbers_in_same_suits.append(cnumbers_in_same_suits[0]+13)
+
+        # Get minimum distance of pairs
+        left = 0
+        for right in range(1, len(cnumbers_in_same_suits)):
+            if cnumbers_in_same_suits[right] - cnumbers_in_same_suits[left] < min_distance:
+                pairsuit = i
+                min_distance = cnumbers_in_same_suits[right] - cnumbers_in_same_suits[left]
+                if right >= 13:
+                    right = right - 13
+                pairnumber = [cnumbers_in_same_suits[left], cnumbers_in_same_suits[right]]
+            left = right
 
     #Find two cards out of the 5 that have the same suit. Guaranteed to exist.
-    cardh = {}
+    cardh = []
     for i in range(5):
-        if cardsuits[i] in pairsuit:
-            pair_list = cardh.get(cardsuits[i])
-            if pair_list == None:
-                cardh[cardsuits[i]] = [i]
-            else:
-                pair_list.append(i)
+        if cardsuits[i] == pairsuit and cnumbers[i] in pairnumber:
+            cardh.append(i)
 
     #Figure out which card needs to be hidden and what number to encode
     hidden, other, encode = outputFirstCard(cnumbers, cardh, cards)
@@ -66,30 +90,24 @@ def AssistantOrdersCards():
 
     return
 
+
+
 #This procedure figures out which card should be hidden based on the distance
 #between the two cards that have the same suit.
 #It returns the hidden card, the first exposed card, and the distance
-def outputFirstCard(numbers, pairs, cards):
+def outputFirstCard(numbers, oneTwo, cards):
 
-    print(cards)
-    min_encode = 13
-    for oneTwo in pairs.values():
-        print(oneTwo)
-        encode = (numbers[oneTwo[0]] - numbers[oneTwo[1]]) % 13
-        if (encode > min_encode):
-            continue
+    encode = (numbers[oneTwo[0]] - numbers[oneTwo[1]]) % 13
+    if 0 < encode <= 6:
+        hidden = oneTwo[0]
+        other = oneTwo[1]
+    else:
+        hidden = oneTwo[1]
+        other = oneTwo[0]
+        encode = (numbers[oneTwo[1]] - numbers[oneTwo[0]]) % 13
 
-        min_encode = encode
-        if 0 < encode <= 6:
-            hidden = oneTwo[0]
-            other = oneTwo[1]
-        else:
-            hidden = oneTwo[1]
-            other = oneTwo[0]
-            encode = (numbers[oneTwo[1]] - numbers[oneTwo[0]]) % 13
-
-##    #The following print statement is just for debugging!
-##    print ('Hidden card is:', cards[hidden], 'and need to encode', encode)
+    ##    #The following print statement is just for debugging!
+    ##    print ('Hidden card is:', cards[hidden], 'and need to encode', encode)
     print ('First card is:', cards[other])
 
     # set hidden & magician cards
@@ -100,15 +118,15 @@ def outputFirstCard(numbers, pairs, cards):
 
 
 #This procedure orders three cards depending on the number "code" that
-#needs to be encoded. 
+#needs to be encoded.
 def outputNext3Cards(code, ind):
-    
+
     if code == 1:
         second, third, fourth = ind[0], ind[1], ind[2]
     elif code == 2:
         second, third, fourth = ind[0], ind[2], ind[1]
     elif code == 3:
-        second, third, fourth = ind[1], ind[0], ind[2]       
+        second, third, fourth = ind[1], ind[0], ind[2]
     elif code == 4:
         second, third, fourth = ind[1], ind[2], ind[0]
     elif code == 5:
@@ -125,7 +143,7 @@ def outputNext3Cards(code, ind):
     magician_cards.append(deck[third])
     magician_cards.append(deck[fourth])
 
-    
+
 #Sorts elements in tlist in ascending order.
 def sortList(tlist):
     for index in range(0, len(tlist)-1):
@@ -134,7 +152,7 @@ def sortList(tlist):
             if tlist[ismall] > tlist[i]:
                 ismall = i
         tlist[index], tlist[ismall] = tlist[ismall], tlist[index]
-    
+
     return
 
 
@@ -150,7 +168,7 @@ def MagicianGuessesCard():
         if len(cards) == 1:
             suit = n % 4
             number = n // 4
-            
+
     #Use the ordering of the last 3 cards to determine distance from 1st card
     if cind[1] < cind[2] and cind[1] < cind[3]:
         if cind[2] < cind[3]:
@@ -158,7 +176,7 @@ def MagicianGuessesCard():
         else:
             encode = 2
     elif ((cind[1] < cind[2] and cind[1] > cind[3])
-         or (cind[1] > cind[2] and cind[1] < cind[3])):
+          or (cind[1] > cind[2] and cind[1] < cind[3])):
         if cind[2] < cind[3]:
             encode = 3
         else:
@@ -179,7 +197,6 @@ def MagicianGuessesCard():
         print ('You are a Mind Reader Extraordinaire!')
     else:
         print ('Sorry, not impressed! Hidden card is', answer_card)
-
 
 AssistantOrdersCards()
 MagicianGuessesCard()
