@@ -69,7 +69,6 @@ def AssistantOrdersCards():
 #It returns the hidden card, the first exposed card, and the distance
 def outputFirstCard(numbers, oneTwo, cards):
 
-
     encode = (numbers[oneTwo[0]] - numbers[oneTwo[1]]) % 13
     if 0 < encode <= 6:
         hidden = oneTwo[0]
